@@ -343,7 +343,7 @@ add_action( 'wp', function() {
     }
 } );
 
-// ── Exclude 'GamiPress Demo' Landing Page from Navigation Menus ────────────
+// ── Exclude 'GamiPress Demo' Landing Page & Add Log In / Log Out to Menus ──
 add_filter( 'wp_page_menu_args', function( $args ) {
     $demo_page = get_page_by_path( 'gamipress-demo' );
     if ( $demo_page ) {
@@ -366,5 +366,66 @@ add_filter( 'wp_get_nav_menu_items', function( $items, $menu, $args ) {
         return (int) $item->object_id !== (int) $demo_page->ID && $item->post_name !== 'gamipress-demo';
     } ) );
 }, 10, 3 );
+
+add_filter( 'wp_page_menu', function( $menu ) {
+    if ( is_user_logged_in() ) {
+        $logout_url  = esc_url( wp_logout_url( home_url() ) );
+        $logout_item = sprintf(
+            '<li class="page_item menu-item"><a href="%s" class="text-danger fw-semibold" style="color:#dc3545!important;"><i class="fa-solid fa-right-from-bracket me-1"></i> Log out</a></li>',
+            $logout_url
+        );
+        $menu = str_replace( '</ul>', $logout_item . '</ul>', $menu );
+    } else {
+        $login_url  = esc_url( wp_login_url( home_url() ) );
+        $login_item = sprintf(
+            '<li class="page_item menu-item"><a href="%s" class="text-primary fw-semibold"><i class="fa-solid fa-right-to-bracket me-1"></i> Log in</a></li>',
+            $login_url
+        );
+        $menu = str_replace( '</ul>', $login_item . '</ul>', $menu );
+    }
+    return $menu;
+} );
+
+// ── Dynamic Login Alert vs Logged In Status Banner Replacement ─────────────
+add_filter( 'the_content', function( $content ) {
+    if ( is_admin() || ! in_the_loop() || ! is_main_query() ) {
+        return $content;
+    }
+
+    if ( is_user_logged_in() ) {
+        $user       = wp_get_current_user();
+        $user_name  = $user ? $user->display_name : 'User';
+        $logout_url = esc_url( wp_logout_url( get_permalink() ) );
+
+        $logged_in_bar = sprintf(
+            '<div class="alert alert-success border-0 shadow-sm d-flex align-items-center justify-content-between py-2 px-3 mb-4 rounded-3">
+                <div class="d-flex align-items-center">
+                    <i class="fa-solid fa-circle-user text-success fs-4 me-2"></i>
+                    <span>Logged in as <strong class="text-dark">%s</strong></span>
+                </div>
+                <a href="%s" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Log out
+                </a>
+            </div>',
+            esc_html( $user_name ),
+            $logout_url
+        );
+
+        $patterns = array(
+            '/<div[^>]*class=[\'"][^\'"]*alert-(?:warning|primary|info)[^\'"]*[\'"][^>]*>.*?Log in.*?<\/div>/is',
+            '/<p[^>]*style=[\'"][^\'"]*background:#fff8e1[^\'"]*[\'"][^>]*>.*?Log in.*?<\/p>/is',
+        );
+
+        foreach ( $patterns as $pattern ) {
+            if ( preg_match( $pattern, $content ) ) {
+                $content = preg_replace( $pattern, $logged_in_bar, $content, 1 );
+                break;
+            }
+        }
+    }
+
+    return $content;
+}, 20 );
+
 
 
