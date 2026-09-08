@@ -343,3 +343,28 @@ add_action( 'wp', function() {
     }
 } );
 
+// ── Exclude 'GamiPress Demo' Landing Page from Navigation Menus ────────────
+add_filter( 'wp_page_menu_args', function( $args ) {
+    $demo_page = get_page_by_path( 'gamipress-demo' );
+    if ( $demo_page ) {
+        $exclude = ! empty( $args['exclude'] ) ? $args['exclude'] : '';
+        $args['exclude'] = trim( $exclude . ',' . $demo_page->ID, ',' );
+    }
+    return $args;
+} );
+
+add_filter( 'wp_get_nav_menu_items', function( $items, $menu, $args ) {
+    if ( empty( $items ) || ! is_array( $items ) ) {
+        return $items;
+    }
+    $demo_page = get_page_by_path( 'gamipress-demo' );
+    if ( ! $demo_page ) {
+        return $items;
+    }
+
+    return array_values( array_filter( $items, function( $item ) use ( $demo_page ) {
+        return (int) $item->object_id !== (int) $demo_page->ID && $item->post_name !== 'gamipress-demo';
+    } ) );
+}, 10, 3 );
+
+

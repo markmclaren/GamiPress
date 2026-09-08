@@ -369,6 +369,21 @@ if [ -n "$DEMO_PAGE_ID" ]; then
   $WP option update page_on_front "$DEMO_PAGE_ID" >/dev/null 2>&1
 fi
 
+# ── Create Navigation Menu (Primary Nav excluding GamiPress Demo) ──────────
+MENU_ID=$($WP menu list --format=ids 2>/dev/null | head -1)
+if [ -z "$MENU_ID" ]; then
+  MENU_ID=$($WP menu create "Header Menu" --porcelain 2>/dev/null || true)
+fi
+
+if [ -n "$MENU_ID" ]; then
+  for SLUG in my-points achievements ranks activity-log earnings-history; do
+    PAGE_ID=$(get_id page "$SLUG")
+    if [ -n "$PAGE_ID" ]; then
+      $WP menu item add-post "$MENU_ID" "$PAGE_ID" >/dev/null 2>&1 || true
+    fi
+  done
+fi
+
 echo ""
 echo "=============================================="
 echo "  GamiPress Demo is ready!"
