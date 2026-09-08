@@ -1,0 +1,218 @@
+<?php
+/**
+ * Plugin Name: GamiPress Badge & Visual Enhancements
+ * Description: Integrates Bootstrap 5, Font Awesome 6, and custom greyed-out / brightly coloured badge styling for GamiPress.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+// ── Register Custom Template Location for GamiPress ──────────────────────────
+add_filter( 'gamipress_template_paths', function( $file_paths ) {
+    array_unshift( $file_paths, WPMU_PLUGIN_DIR . '/templates/' );
+    return $file_paths;
+} );
+
+// ── Enqueue Bootstrap 5 & Font Awesome 6 ──────────────────────────────────────
+add_action( 'wp_enqueue_scripts', function() {
+    // Bootstrap 5 CSS
+    wp_enqueue_style(
+        'bootstrap-5',
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
+        array(),
+        '5.3.3'
+    );
+
+    // Font Awesome 6
+    wp_enqueue_style(
+        'font-awesome-6',
+        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+        array(),
+        '6.5.1'
+    );
+
+    // Bootstrap 5 Bundle JS
+    wp_enqueue_script(
+        'bootstrap-5-js',
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+        array(),
+        '5.3.3',
+        true
+    );
+} );
+
+// ── Inject Custom CSS for Badges & Layout ────────────────────────────────────
+add_action( 'wp_head', function() {
+    ?>
+    <style id="gp-demo-badge-styles">
+    /* ── Grid Layout for Achievements ────────────────────────────────────── */
+    .gamipress-achievements-container {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+        gap: 1.5rem !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    /* Clear default float/inline GamiPress layout styles */
+    .gamipress-achievement.gp-badge-card {
+        float: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── Base Card Design ─────────────────────────────────────────────────── */
+    .gp-badge-card {
+        background: #ffffff;
+        border-radius: 16px !important;
+        padding: 1.5rem 1.25rem !important;
+        text-align: center;
+        position: relative;
+        transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .gp-badge-card-inner {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    /* ── Icon Circle ────────────────────────────────────────────────────── */
+    .gp-badge-icon-wrapper {
+        width: 84px;
+        height: 84px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: transform 0.3s ease;
+    }
+
+    .gp-badge-card:hover .gp-badge-icon-wrapper {
+        transform: scale(1.08) rotate(4deg);
+    }
+
+    .gp-badge-fa-icon {
+        font-size: 38px;
+        color: #ffffff;
+        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+    }
+
+    /* ── GREYED OUT / UNLEARNED / LOCKED BADGES ────────────────────────────── */
+    .gp-badge-card.badge-locked,
+    .gamipress-achievement.user-has-not-earned {
+        filter: grayscale(100%);
+        opacity: 0.65;
+        background: #f8f9fa !important;
+        border: 1px dashed #ced4da !important;
+        box-shadow: none !important;
+    }
+
+    .gp-badge-card.badge-locked:hover,
+    .gamipress-achievement.user-has-not-earned:hover {
+        filter: grayscale(70%);
+        opacity: 0.85;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .badge-locked .gp-badge-fa-icon {
+        color: #6c757d !important;
+        filter: none !important;
+    }
+
+    .gp-badge-lock-overlay {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        background: #495057;
+        color: #ffffff;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border: 2px solid #ffffff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    /* ── BRIGHTLY COLOURED / UNLOCKED BADGES ─────────────────────────────── */
+    .gp-badge-card.badge-unlocked,
+    .gamipress-achievement.user-has-earned {
+        filter: none !important;
+        opacity: 1 !important;
+        background: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.06) !important;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .gp-badge-card.badge-unlocked:hover,
+    .gamipress-achievement.user-has-earned:hover {
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14) !important;
+    }
+
+    /* ── Requirements & Step Lists ────────────────────────────────────────── */
+    .gp-badge-steps ul.gamipress-required-achievements {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0.4rem 0 0 0 !important;
+    }
+
+    .gp-badge-steps ul.gamipress-required-achievements li {
+        font-size: 0.82rem;
+        padding: 5px 10px;
+        border-radius: 8px;
+        background: #f1f3f5;
+        margin-bottom: 4px;
+        color: #495057;
+        display: inline-block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .gp-badge-steps ul.gamipress-required-achievements li.user-has-earned {
+        background: #e6fcf5 !important;
+        color: #0ca678 !important;
+        font-weight: 600;
+        border: 1px solid #96f2d7;
+    }
+
+    .gp-pts-req-pill {
+        font-size: 0.82rem;
+        padding: 5px 10px;
+        border-radius: 8px;
+        background: #fff9db;
+        color: #f59f00;
+        font-weight: 600;
+        border: 1px solid #ffe066;
+        display: inline-block;
+        width: 100%;
+    }
+
+    /* Hide standard GamiPress toggle switch if steps are rendered cleanly */
+    .gp-badge-card .gamipress-open-close-switch {
+        display: none !important;
+    }
+    .gp-badge-card .gamipress-extras-window {
+        display: block !important;
+    }
+
+    /* Modern Theme & Typography Overrides */
+    body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #f8f9fa;
+        color: #212529;
+    }
+    </style>
+    <?php
+}, 99 );

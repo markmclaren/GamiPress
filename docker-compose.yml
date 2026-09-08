@@ -1,0 +1,79 @@
+services:
+
+  # ─── MySQL database ──────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: gamipress_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── WordPress ───────────────────────────────────────────────────────────────
+  wordpress:
+    image: wordpress:6.0-php8.0-apache
+    container_name: gamipress_wp
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DEBUG: "1"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+    volumes:
+      # Mount the plugin source into WordPress plugins directory
+      - .:/var/www/html/wp-content/plugins/gamipress:ro
+      # Mount must-use plugins (demo panel, etc.)
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      # Persist the rest of WordPress (uploads, themes, other plugins)
+      - wp_data:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/wp-login.php"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # ─── WP-CLI setup (runs once, then exits) ────────────────────────────────────
+  setup:
+    image: wordpress:cli-php8.0
+    container_name: gamipress_setup
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    user: "33:33"   # www-data inside the container
+    volumes:
+      - .:/var/www/html/wp-content/plugins/gamipress:ro
+      - wp_data:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WP_ADMIN_USER: ${WP_ADMIN_USER:-admin}
+      WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD:-admin123}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-admin@example.com}
+      WP_SITE_TITLE: ${WP_SITE_TITLE:-GamiPress Demo}
+      WP_SITE_URL: ${WP_SITE_URL:-http://localhost:8080}
+    entrypoint: ["/bin/sh", "/var/www/html/wp-content/plugins/gamipress/setup.sh"]
+
+volumes:
+  db_data:
+  wp_data:
