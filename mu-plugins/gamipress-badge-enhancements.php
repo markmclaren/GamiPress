@@ -386,6 +386,38 @@ add_filter( 'wp_page_menu', function( $menu ) {
     return $menu;
 } );
 
+// ── Gutenberg Block Theme Navigation Filter (Twenty Twenty-Two FSE) ─────────
+add_filter( 'render_block', function( $block_content, $block ) {
+    if ( ! empty( $block['blockName'] ) && ( $block['blockName'] === 'core/page-list' || $block['blockName'] === 'core/navigation' ) ) {
+        // Strip GamiPress Demo page item from Block Theme navigation
+        $pattern1 = '/<li[^>]*menu-item-home[^>]*>.*?<\/li>/is';
+        $block_content = preg_replace( $pattern1, '', $block_content );
+        $pattern2 = '/<li[^>]*>.*?href=[\'"][^\'"]*gamipress-demo[^\'"]*[\'"][^>]*>.*?<\/li>/is';
+        $block_content = preg_replace( $pattern2, '', $block_content );
+
+        // Append Log out or Log in item if not already present
+        if ( strpos( $block_content, 'Log out' ) === false && strpos( $block_content, 'Log in' ) === false ) {
+            if ( is_user_logged_in() ) {
+                $logout_url  = esc_url( wp_logout_url( home_url() ) );
+                $logout_item = sprintf(
+                    '<li class="wp-block-pages-list__item wp-block-navigation-item open-on-hover-click"><a class="wp-block-pages-list__item__link wp-block-navigation-item__content text-danger fw-semibold" style="color:#dc3545!important;" href="%s"><i class="fa-solid fa-right-from-bracket me-1"></i> Log out</a></li>',
+                    $logout_url
+                );
+                $block_content = preg_replace( '/<\/ul>/', $logout_item . '</ul>', $block_content, 1 );
+            } else {
+                $login_url  = esc_url( wp_login_url( home_url() ) );
+                $login_item = sprintf(
+                    '<li class="wp-block-pages-list__item wp-block-navigation-item open-on-hover-click"><a class="wp-block-pages-list__item__link wp-block-navigation-item__content text-primary fw-semibold" href="%s"><i class="fa-solid fa-right-to-bracket me-1"></i> Log in</a></li>',
+                    $login_url
+                );
+                $block_content = preg_replace( '/<\/ul>/', $login_item . '</ul>', $block_content, 1 );
+            }
+        }
+    }
+    return $block_content;
+}, 10, 2 );
+
+
 // ── Dynamic Login Alert vs Logged In Status Banner Replacement ─────────────
 add_filter( 'the_content', function( $content ) {
     if ( is_admin() || ! in_the_loop() || ! is_main_query() ) {
