@@ -15,7 +15,9 @@ $WP core install \
   --skip-email >/dev/null 2>&1 || true
 
 $WP plugin activate gamipress >/dev/null 2>&1
-$WP eval "gamipress_register_custom_tables(); foreach(['gamipress_user_earnings', 'gamipress_logs'] as \$n) { \$t = ct_setup_table(\$n); if(\$t && isset(\$t->db)) \$t->db->maybe_upgrade(); }" >/dev/null 2>&1 || true
+$WP option update gamipress_version "2.4.0" >/dev/null 2>&1
+$WP option update gamipress_db_version "2.4.0" >/dev/null 2>&1
+$WP eval "gamipress_register_custom_tables(); foreach(['gamipress_user_earnings', 'gamipress_user_earnings_meta', 'gamipress_logs', 'gamipress_logs_meta'] as \$n) { \$t = ct_setup_table(\$n); if(\$t && isset(\$t->db)) \$t->db->maybe_upgrade(); }" >/dev/null 2>&1 || true
 
 # Remove sample page if present
 SAMPLE_PAGE_ID=$($WP post list --post_type=page --name=sample-page --field=ID --format=ids 2>/dev/null | head -1)

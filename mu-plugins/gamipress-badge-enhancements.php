@@ -6,6 +6,16 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// ── Ensure GamiPress Version Options Are Set ──────────────────────────────
+add_action( 'init', function() {
+    if ( defined( 'GAMIPRESS_VER' ) ) {
+        if ( get_option( 'gamipress_version' ) !== GAMIPRESS_VER ) {
+            update_option( 'gamipress_version', GAMIPRESS_VER );
+            update_option( 'gamipress_db_version', GAMIPRESS_VER );
+        }
+    }
+} );
+
 // ── Register Custom Template Location for GamiPress ──────────────────────────
 add_filter( 'gamipress_template_paths', function( $file_paths ) {
     array_unshift( $file_paths, WPMU_PLUGIN_DIR . '/templates/' );

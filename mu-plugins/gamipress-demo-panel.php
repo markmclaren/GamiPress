@@ -264,6 +264,7 @@ function gp_demo_panel_render() {
                 .then(function (data) {
                     if (data.success) {
                         showToast('✅ ' + data.data.message, 'success');
+                        setTimeout(function () { window.location.reload(); }, 1200);
                     } else {
                         showToast('❌ ' + (data.data || 'Something went wrong.'), 'error');
                     }
