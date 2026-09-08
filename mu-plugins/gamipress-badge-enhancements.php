@@ -226,3 +226,52 @@ add_action( 'wp_head', function() {
     </style>
     <?php
 }, 99 );
+
+// ── Earnings History Thumbnail Fallback (Font Awesome Icons) ───────────────
+add_filter( 'gamipress_earnings_render_column', function( $column_output, $column_name, $user_earning, $template_args ) {
+    if ( $column_name !== 'thumbnail' ) {
+        return $column_output;
+    }
+
+    if ( ! empty( trim( $column_output ) ) ) {
+        return $column_output;
+    }
+
+    $post_id = $user_earning->post_id;
+    $post    = get_post( $post_id );
+    $slug    = $post ? $post->post_name : '';
+    $title   = $user_earning->title ? $user_earning->title : ( $post ? $post->post_title : '' );
+
+    $icon_map = array(
+        'badge-welcome'          => array( 'icon' => 'fa-rocket',          'bg' => 'linear-gradient(135deg, #ff416c, #ff4b2b)' ),
+        'badge-conversationalist' => array( 'icon' => 'fa-comments',        'bg' => 'linear-gradient(135deg, #00c6ff, #0072ff)' ),
+        'badge-regular-visitor'  => array( 'icon' => 'fa-fire',            'bg' => 'linear-gradient(135deg, #f857a6, #ff5858)' ),
+        'badge-author'           => array( 'icon' => 'fa-pen-nib',         'bg' => 'linear-gradient(135deg, #11998e, #38ef7d)' ),
+        'badge-high-roller'      => array( 'icon' => 'fa-crown',           'bg' => 'linear-gradient(135deg, #f7971e, #ffd200)' ),
+        'rank-newcomer'          => array( 'icon' => 'fa-seedling',        'bg' => 'linear-gradient(135deg, #42e695, #3bb2b8)' ),
+        'rank-explorer'          => array( 'icon' => 'fa-compass',         'bg' => 'linear-gradient(135deg, #5b86e5, #36d1dc)' ),
+        'rank-contributor'       => array( 'icon' => 'fa-award',           'bg' => 'linear-gradient(135deg, #ff8c00, #e52e71)' ),
+        'rank-champion'          => array( 'icon' => 'fa-trophy',          'bg' => 'linear-gradient(135deg, #f7971e, #ffd200)' ),
+        'credits'                => array( 'icon' => 'fa-coins',           'bg' => 'linear-gradient(135deg, #f09819, #edde5d)' ),
+    );
+
+    $cfg = $icon_map[ $slug ] ?? null;
+
+    if ( ! $cfg ) {
+        if ( in_array( $user_earning->post_type, array( 'credits', 'points-type', 'points-award' ) ) || strpos( strtolower( $title ), 'credit' ) !== false ) {
+            $cfg = array( 'icon' => 'fa-coins', 'bg' => 'linear-gradient(135deg, #f09819, #edde5d)' );
+        } elseif ( in_array( $user_earning->post_type, gamipress_get_achievement_types_slugs() ) ) {
+            $cfg = array( 'icon' => 'fa-award', 'bg' => 'linear-gradient(135deg, #8e2de2, #4a00e0)' );
+        } elseif ( in_array( $user_earning->post_type, gamipress_get_rank_types_slugs() ) ) {
+            $cfg = array( 'icon' => 'fa-layer-group', 'bg' => 'linear-gradient(135deg, #11998e, #38ef7d)' );
+        } else {
+            $cfg = array( 'icon' => 'fa-star', 'bg' => 'linear-gradient(135deg, #667eea, #764ba2)' );
+        }
+    }
+
+    return sprintf(
+        '<div class="gp-earnings-thumb" style="width:40px;height:40px;border-radius:50%%;background:%s;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 3px 8px rgba(0,0,0,0.15);"><i class="fa-solid %s"></i></div>',
+        esc_attr( $cfg['bg'] ),
+        esc_attr( $cfg['icon'] )
+    );
+}, 20, 4 );
