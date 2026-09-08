@@ -459,5 +459,34 @@ add_filter( 'the_content', function( $content ) {
     return $content;
 }, 20 );
 
+// ── Robust Login Trigger & Cache Invalidation ──────────────────────────────
+add_action( 'init', function() {
+    if ( function_exists( 'gamipress_get_triggers_listeners_count' ) ) {
+        $tc = gamipress_get_triggers_listeners_count();
+        if ( empty( $tc ) ) {
+            gamipress_delete_cache( 'gamipress_triggers_listeners_count' );
+            if ( function_exists( 'wp_cache_flush' ) ) {
+                wp_cache_flush();
+            }
+        }
+    }
+}, 5 );
+
+add_action( 'wp_login', function( $user_login, $user = null ) {
+    if ( ! $user || ! is_a( $user, 'WP_User' ) ) {
+        $user = get_user_by( 'login', $user_login );
+        if ( ! $user ) {
+            $user = get_user_by( 'email', $user_login );
+        }
+    }
+    if ( $user && function_exists( 'gamipress_trigger_event' ) ) {
+        gamipress_trigger_event( array(
+            'event'   => 'gamipress_login',
+            'user_id' => $user->ID,
+        ) );
+    }
+}, 20, 2 );
+
+
 
 

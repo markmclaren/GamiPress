@@ -384,6 +384,9 @@ if [ -n "$MENU_ID" ]; then
   done
 fi
 
+# Clear stale GamiPress trigger listener cache so login & activity triggers fire immediately
+$WP eval "gamipress_delete_cache('gamipress_triggers_listeners_count'); if(function_exists('wp_cache_flush')) wp_cache_flush();" >/dev/null 2>&1 || true
+
 echo ""
 echo "=============================================="
 echo "  GamiPress Demo is ready!"
