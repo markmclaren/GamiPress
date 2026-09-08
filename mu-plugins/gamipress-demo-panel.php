@@ -25,6 +25,17 @@ function gp_demo_panel_award() {
         $amount = absint( $_POST['amount'] ?? 100 );
         gamipress_award_points_to_user( $user_id, $amount, 'credits' );
 
+        // Also record entry in Earnings History table (wp_gamipress_user_earnings)
+        $pt_id = gamipress_get_points_type_id( 'credits' );
+        gamipress_insert_user_earning( $user_id, array(
+            'title'       => sprintf( '+%d Credits', $amount ),
+            'post_id'     => $pt_id ? $pt_id : 0,
+            'post_type'   => 'points-type',
+            'points'      => $amount,
+            'points_type' => 'credits',
+            'date'        => date( 'Y-m-d H:i:s', current_time( 'timestamp' ) ),
+        ) );
+
         $balance = gamipress_get_user_points( $user_id, 'credits' );
         wp_send_json_success( array(
             'message' => sprintf( '+%d Credits awarded! New balance: %d', $amount, $balance ),
