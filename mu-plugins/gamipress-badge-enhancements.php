@@ -62,14 +62,128 @@ add_action( 'wp_enqueue_scripts', function() {
 add_action( 'wp_head', function() {
     ?>
     <style id="gp-demo-badge-styles">
-    /* ── Grid Layout for Achievements & Ranks ────────────────────────────── */
+    /* ── Grid Layout for Achievements, Ranks & Points Types ──────────────── */
     .gamipress-achievements-container,
-    .gamipress-ranks-container {
+    .gamipress-ranks-container,
+    .gamipress-user-points {
         display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
         gap: 1.5rem !important;
         margin-top: 1.5rem !important;
         margin-bottom: 2rem !important;
+    }
+
+    /* ── Points Types Card & Icon Styling ───────────────────────────── */
+    .gamipress-user-points .gamipress-points {
+        float: none !important;
+        width: 100% !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+        border-radius: 16px !important;
+        padding: 1.75rem 1.25rem !important;
+        text-align: center !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04) !important;
+        transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    .gamipress-user-points .gamipress-points:hover {
+        transform: translateY(-5px) scale(1.02) !important;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .gamipress-user-points-image {
+        width: 76px !important;
+        height: 76px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto 1.25rem auto !important;
+        position: relative !important;
+        transition: transform 0.3s ease !important;
+    }
+
+    .gamipress-user-points .gamipress-points:hover .gamipress-user-points-image {
+        transform: scale(1.08) rotate(4deg) !important;
+    }
+
+    /* Specific Points Type Icons & Gradients */
+    .gamipress-user-points-coins-image:empty {
+        background: linear-gradient(135deg, #ffb347, #ffcc33) !important;
+        box-shadow: 0 6px 16px rgba(255, 179, 71, 0.4) !important;
+    }
+    .gamipress-user-points-coins-image:empty::before {
+        content: "\f51e";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 34px;
+        color: #ffffff;
+        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
+    }
+
+    .gamipress-user-points-credits-image:empty {
+        background: linear-gradient(135deg, #f09819, #edde5d) !important;
+        box-shadow: 0 6px 16px rgba(240, 152, 25, 0.4) !important;
+    }
+    .gamipress-user-points-credits-image:empty::before {
+        content: "\f555";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 34px;
+        color: #ffffff;
+        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
+    }
+
+    .gamipress-user-points-gems-image:empty {
+        background: linear-gradient(135deg, #e100ff, #7f00ff) !important;
+        box-shadow: 0 6px 16px rgba(225, 0, 255, 0.4) !important;
+    }
+    .gamipress-user-points-gems-image:empty::before {
+        content: "\f3a5";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 34px;
+        color: #ffffff;
+        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
+    }
+
+    .gamipress-user-points-image:empty:not(.gamipress-user-points-coins-image):not(.gamipress-user-points-credits-image):not(.gamipress-user-points-gems-image) {
+        background: linear-gradient(135deg, #4facfe, #00f2fe) !important;
+        box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4) !important;
+    }
+    .gamipress-user-points-image:empty:not(.gamipress-user-points-coins-image):not(.gamipress-user-points-credits-image):not(.gamipress-user-points-gems-image)::before {
+        content: "\f005";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 34px;
+        color: #ffffff;
+        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.25));
+    }
+
+    /* Typography for Amounts & Labels */
+    .gamipress-user-points-amount {
+        font-size: 2.25rem !important;
+        font-weight: 800 !important;
+        color: #212529 !important;
+        display: block !important;
+        line-height: 1.1 !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    .gamipress-user-points-label {
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        color: #6c757d !important;
+        display: block !important;
+        margin-top: 0.35rem !important;
     }
 
     /* Clear default float/inline GamiPress layout styles */
