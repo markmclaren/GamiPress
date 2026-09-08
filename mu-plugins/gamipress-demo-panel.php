@@ -57,7 +57,62 @@ function gp_demo_panel_award() {
         ) );
     }
 
+    // ── Reset ─────────────────────────────────────────────────────────────────
+    if ( $type === 'reset' ) {
+        gp_reset_user_gamipress_data( $user_id );
+        wp_send_json_success( array(
+            'message' => '🔄 User data reset! 0 Credits, locked badges, starting rank.',
+        ) );
+    }
+
     wp_send_json_error( 'Unknown award type.' );
+}
+
+/**
+ * Reset all GamiPress data for a given user (points, badges, ranks, earnings, logs)
+ */
+function gp_reset_user_gamipress_data( $user_id ) {
+    global $wpdb;
+
+    if ( ! $user_id ) return;
+
+    // Delete usermeta starting with _gamipress_ or gamipress_
+    $wpdb->query( $wpdb->prepare(
+        "DELETE FROM {$wpdb->usermeta} WHERE user_id = %d AND (meta_key LIKE '_gamipress_%%' OR meta_key LIKE 'gamipress_%%')",
+        $user_id
+    ) );
+
+    // Delete user earnings & meta
+    $earning_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT user_earning_id FROM {$wpdb->prefix}gamipress_user_earnings WHERE user_id = %d",
+        $user_id
+    ) );
+
+    if ( ! empty( $earning_ids ) ) {
+        $ids_str = implode( ',', array_map( 'absint', $earning_ids ) );
+        $wpdb->query( "DELETE FROM {$wpdb->prefix}gamipress_user_earnings_meta WHERE user_earning_id IN ($ids_str)" );
+        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}gamipress_user_earnings WHERE user_id = %d", $user_id ) );
+    }
+
+    // Delete activity logs & meta
+    $log_ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT log_id FROM {$wpdb->prefix}gamipress_logs WHERE user_id = %d",
+        $user_id
+    ) );
+
+    if ( ! empty( $log_ids ) ) {
+        $ids_str = implode( ',', array_map( 'absint', $log_ids ) );
+        $wpdb->query( "DELETE FROM {$wpdb->prefix}gamipress_logs_meta WHERE log_id IN ($ids_str)" );
+        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}gamipress_logs WHERE user_id = %d", $user_id ) );
+    }
+
+    // Reset rank to starting rank (Newcomer)
+    if ( function_exists( 'gamipress_get_lowest_priority_rank_id' ) ) {
+        $lowest_rank_id = gamipress_get_lowest_priority_rank_id( 'levels' );
+        if ( $lowest_rank_id ) {
+            gamipress_update_user_rank( $user_id, $lowest_rank_id );
+        }
+    }
 }
 
 // ── Front-end panel ───────────────────────────────────────────────────────────
@@ -227,6 +282,12 @@ function gp_demo_panel_render() {
             </button>
             <?php endforeach; ?>
             <?php endif; ?>
+
+            <h4>🔄 Reset Progress</h4>
+            <button class="gp-badge-btn" data-award="reset" style="background:#fff0f0;color:#d32f2f;border-color:#ffcdd2;">
+                <strong>Reset All Data</strong>
+                <span>Clear points, badges, rank &amp; history</span>
+            </button>
 
             <div id="gp-panel-toast"></div>
         </div>

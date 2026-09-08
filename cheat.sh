@@ -76,6 +76,30 @@ case "$CMD" in
     echo "    View rank → http://localhost:8080/ranks/"
     ;;
 
+  reset)
+    $WP eval "
+      \$user_id = ${DEMO_ID}; global \$wpdb;
+      \$wpdb->query(\$wpdb->prepare(\"DELETE FROM {\$wpdb->usermeta} WHERE user_id = %d AND (meta_key LIKE '_gamipress_%%' OR meta_key LIKE 'gamipress_%%')\", \$user_id));
+      \$earning_ids = \$wpdb->get_col(\$wpdb->prepare(\"SELECT user_earning_id FROM {\$wpdb->prefix}gamipress_user_earnings WHERE user_id = %d\", \$user_id));
+      if (!empty(\$earning_ids)) {
+        \$ids_str = implode(',', array_map('absint', \$earning_ids));
+        \$wpdb->query(\"DELETE FROM {\$wpdb->prefix}gamipress_user_earnings_meta WHERE user_earning_id IN (\$ids_str)\");
+        \$wpdb->query(\$wpdb->prepare(\"DELETE FROM {\$wpdb->prefix}gamipress_user_earnings WHERE user_id = %d\", \$user_id));
+      }
+      \$log_ids = \$wpdb->get_col(\$wpdb->prepare(\"SELECT log_id FROM {\$wpdb->prefix}gamipress_logs WHERE user_id = %d\", \$user_id));
+      if (!empty(\$log_ids)) {
+        \$ids_str = implode(',', array_map('absint', \$log_ids));
+        \$wpdb->query(\"DELETE FROM {\$wpdb->prefix}gamipress_logs_meta WHERE log_id IN (\$ids_str)\");
+        \$wpdb->query(\$wpdb->prepare(\"DELETE FROM {\$wpdb->prefix}gamipress_logs WHERE user_id = %d\", \$user_id));
+      }
+      if (function_exists('gamipress_get_lowest_priority_rank_id')) {
+        \$lowest = gamipress_get_lowest_priority_rank_id('levels');
+        if (\$lowest) gamipress_update_user_rank(\$user_id, \$lowest);
+      }
+    " >/dev/null
+    echo "🔄  Reset all data for '$DEMO_USER' (0 Credits, locked badges, starting rank, cleared logs)."
+    ;;
+
   list)
     case "$ARG" in
       badges)
