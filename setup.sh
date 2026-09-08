@@ -302,16 +302,39 @@ create_page "achievements" "Achievements" \
 
 # 4 — Ranks
 create_page "ranks" "Ranks" \
-"<h2>Rank Ladder</h2>
-<p><strong>Ranks</strong> are a progression system — users move up through tiers (Levels, Grades, Belts, etc.) by satisfying rank requirements. Unlike badges, only one rank is held at a time; earning a higher rank replaces the previous one.</p>
-<p>This demo uses a <strong>Levels</strong> rank type. The full ladder is shown below — each card lists the requirements needed to reach that Level:</p>
+"<div class='container my-3'>
+<div class='alert alert-warning shadow-sm border-0 d-flex align-items-center mb-4'>
+  <i class='fa-solid fa-lock me-2 fs-5'></i>
+  <div>
+    <strong>Log in to track your personal rank level and progress.</strong>
+    <a href='/wp-login.php?redirect_to=%2Franks%2F' class='alert-link ms-2'>Log in as demo / demo123</a>
+  </div>
+</div>
+
+<div class='mb-4'>
+  <h2 class='fw-bold mb-2'><i class='fa-solid fa-layer-group text-success me-2'></i>Rank Progression Ladder</h2>
+  <p class='text-secondary mb-0'>
+    <strong>Ranks</strong> represent your level of achievement as you earn Credits. Higher rank tiers unlock automatically as your total Credits grow!
+  </p>
+</div>
+
 [gamipress_ranks type=\"levels\" columns=\"4\" limit=\"20\"]
-<hr/>
-<h3>Your Current Rank</h3>
-<p>The widget below shows your previous, current, and next rank so users always know where they stand and what to aim for next:</p>
-[gamipress_user_rank type=\"levels\"]
-<h3>How ranks are configured</h3>
-<p>Rank types and their requirements are managed under <strong>GamiPress → Levels</strong> in the admin. Drag-and-drop the requirements and set point thresholds, activity counts, or achievement milestones as unlock criteria.</p>"
+
+<div class='card shadow-sm border-0 my-5'>
+  <div class='card-header bg-white border-bottom fw-semibold py-3'>
+    <i class='fa-solid fa-circle-info text-primary me-2'></i>How Ranks Work
+  </div>
+  <div class='card-body p-4'>
+    <p class='mb-2'>Users automatically advance through rank tiers based on their accumulated <strong>Credits</strong> balance:</p>
+    <ul class='mb-0'>
+      <li><strong>Newcomer:</strong> Starting rank (0 Credits)</li>
+      <li><strong>Explorer:</strong> Unlocks at 50 Credits</li>
+      <li><strong>Contributor:</strong> Unlocks at 200 Credits</li>
+      <li><strong>Champion:</strong> Top rank — unlocks at 500 Credits</li>
+    </ul>
+  </div>
+</div>
+</div>"
 
 # 5 — Activity Log
 create_page "activity-log" "Activity Log" \

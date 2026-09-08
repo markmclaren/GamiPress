@@ -54,8 +54,9 @@ add_action( 'wp_enqueue_scripts', function() {
 add_action( 'wp_head', function() {
     ?>
     <style id="gp-demo-badge-styles">
-    /* ── Grid Layout for Achievements ────────────────────────────────────── */
-    .gamipress-achievements-container {
+    /* ── Grid Layout for Achievements & Ranks ────────────────────────────── */
+    .gamipress-achievements-container,
+    .gamipress-ranks-container {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
         gap: 1.5rem !important;
@@ -64,11 +65,19 @@ add_action( 'wp_head', function() {
     }
 
     /* Clear default float/inline GamiPress layout styles */
-    .gamipress-achievement.gp-badge-card {
+    .gamipress-achievement.gp-badge-card,
+    .gamipress-rank.gp-rank-card {
         float: none !important;
         width: 100% !important;
         margin: 0 !important;
         box-sizing: border-box !important;
+    }
+
+    /* ── Active / Current User Rank Highlight ───────────────────────────── */
+    .gp-rank-card.current-user-rank,
+    .gp-rank-card.active-rank-card {
+        border: 2px solid #0d6efd !important;
+        box-shadow: 0 0 18px rgba(13, 110, 253, 0.25) !important;
     }
 
     /* ── Base Card Design ─────────────────────────────────────────────────── */
@@ -115,9 +124,10 @@ add_action( 'wp_head', function() {
         filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
     }
 
-    /* ── GREYED OUT / UNLEARNED / LOCKED BADGES ────────────────────────────── */
+    /* ── GREYED OUT / UNLEARNED / LOCKED BADGES & RANKS ──────────────────── */
     .gp-badge-card.badge-locked,
-    .gamipress-achievement.user-has-not-earned {
+    .gamipress-achievement.user-has-not-earned,
+    .gamipress-rank.user-has-not-earned {
         filter: grayscale(100%);
         opacity: 0.65;
         background: #f8f9fa !important;
@@ -126,7 +136,8 @@ add_action( 'wp_head', function() {
     }
 
     .gp-badge-card.badge-locked:hover,
-    .gamipress-achievement.user-has-not-earned:hover {
+    .gamipress-achievement.user-has-not-earned:hover,
+    .gamipress-rank.user-has-not-earned:hover {
         filter: grayscale(70%);
         opacity: 0.85;
         transform: translateY(-3px);
@@ -155,9 +166,10 @@ add_action( 'wp_head', function() {
         box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
-    /* ── BRIGHTLY COLOURED / UNLOCKED BADGES ─────────────────────────────── */
+    /* ── BRIGHTLY COLOURED / UNLOCKED BADGES & RANKS ─────────────────────── */
     .gp-badge-card.badge-unlocked,
-    .gamipress-achievement.user-has-earned {
+    .gamipress-achievement.user-has-earned,
+    .gamipress-rank.user-has-earned {
         filter: none !important;
         opacity: 1 !important;
         background: #ffffff !important;
@@ -166,19 +178,22 @@ add_action( 'wp_head', function() {
     }
 
     .gp-badge-card.badge-unlocked:hover,
-    .gamipress-achievement.user-has-earned:hover {
+    .gamipress-achievement.user-has-earned:hover,
+    .gamipress-rank.user-has-earned:hover {
         transform: translateY(-6px) scale(1.02);
         box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14) !important;
     }
 
     /* ── Requirements & Step Lists ────────────────────────────────────────── */
-    .gp-badge-steps ul.gamipress-required-achievements {
+    .gp-badge-steps ul.gamipress-required-achievements,
+    .gp-badge-steps ul.gamipress-rank-requirements {
         list-style: none !important;
         padding: 0 !important;
         margin: 0.4rem 0 0 0 !important;
     }
 
-    .gp-badge-steps ul.gamipress-required-achievements li {
+    .gp-badge-steps ul.gamipress-required-achievements li,
+    .gp-badge-steps ul.gamipress-rank-requirements li {
         font-size: 0.82rem;
         padding: 5px 10px;
         border-radius: 8px;
@@ -190,7 +205,8 @@ add_action( 'wp_head', function() {
         box-sizing: border-box;
     }
 
-    .gp-badge-steps ul.gamipress-required-achievements li.user-has-earned {
+    .gp-badge-steps ul.gamipress-required-achievements li.user-has-earned,
+    .gp-badge-steps ul.gamipress-rank-requirements li.user-has-earned {
         background: #e6fcf5 !important;
         color: #0ca678 !important;
         font-weight: 600;
@@ -209,8 +225,10 @@ add_action( 'wp_head', function() {
         width: 100%;
     }
 
-    /* Hide standard GamiPress toggle switch if steps are rendered cleanly */
-    .gp-badge-card .gamipress-open-close-switch {
+    /* Hide standard GamiPress toggle switch and redundant headings if steps are rendered cleanly */
+    .gp-badge-card .gamipress-open-close-switch,
+    .gp-badge-card .gamipress-rank-requirements-heading,
+    .gamipress-rank-type-title {
         display: none !important;
     }
     .gp-badge-card .gamipress-extras-window {
@@ -275,3 +293,53 @@ add_filter( 'gamipress_earnings_render_column', function( $column_output, $colum
         esc_attr( $cfg['icon'] )
     );
 }, 20, 4 );
+
+// ── Automatic Rank Update on Points Gain ──────────────────────────────────
+function gp_check_and_update_user_rank( $user_id ) {
+    if ( ! $user_id || ! function_exists( 'gamipress_get_user_points' ) ) {
+        return;
+    }
+
+    $credits = (int) gamipress_get_user_points( $user_id, 'credits' );
+    
+    $ranks = gamipress_get_ranks( array(
+        'post_type'      => 'levels',
+        'orderby'        => 'meta_value_num',
+        'meta_key'       => '_gamipress_points_to_unlock',
+        'order'          => 'DESC',
+        'posts_per_page' => -1,
+    ) );
+
+    if ( empty( $ranks ) ) {
+        return;
+    }
+
+    $current_rank_id = (int) gamipress_get_user_rank_id( $user_id, 'levels' );
+
+    foreach ( $ranks as $rank ) {
+        $threshold = (int) get_post_meta( $rank->ID, '_gamipress_points_to_unlock', true );
+        if ( $credits >= $threshold ) {
+            if ( $current_rank_id !== (int) $rank->ID ) {
+                gamipress_update_user_rank( $user_id, $rank->ID, $current_rank_id );
+            }
+            break;
+        }
+    }
+}
+
+add_action( 'gamipress_award_points_to_user', function( $user_id, $amount, $points_type ) {
+    if ( $points_type === 'credits' ) {
+        gp_check_and_update_user_rank( $user_id );
+    }
+}, 10, 3 );
+
+add_action( 'gamipress_update_user_points', function( $user_id, $new_points, $old_points, $points_type ) {
+    gp_check_and_update_user_rank( $user_id );
+}, 10, 4 );
+
+add_action( 'wp', function() {
+    if ( is_user_logged_in() ) {
+        gp_check_and_update_user_rank( get_current_user_id() );
+    }
+} );
+
