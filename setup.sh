@@ -263,7 +263,7 @@ create_page "my-points" "My Points" \
     <a href='/wp-login.php?redirect_to=%2Fmy-points%2F' class='alert-link ms-2'>Log in as demo / demo123</a>
   </div>
 </div>
-<p>GamiPress supports multiple <strong>points types</strong> (Credits, Gems, Coins). The balance below is rendered dynamically by <code>[gamipress_points]</code>:</p>
+<p>GamiPress supports multiple <strong>points types</strong> (Credits, Gems, Coins). Your balances below are rendered dynamically by <code>[[gamipress_points]]</code>:</p>
 [gamipress_points]
 <div class='card shadow-sm border-0 my-4'>
   <div class='card-header bg-white border-bottom fw-semibold py-3'>
