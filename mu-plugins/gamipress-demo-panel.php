@@ -20,25 +20,28 @@ function gp_demo_panel_award() {
 
     $type = sanitize_text_field( $_POST['award_type'] ?? '' );
 
-    // ── Points ────────────────────────────────────────────────────────────────
-    if ( $type === 'credits' ) {
-        $amount = absint( $_POST['amount'] ?? 100 );
-        gamipress_award_points_to_user( $user_id, $amount, 'credits' );
+    // ── Points (Credits, Gems, Coins, etc.) ────────────────────────────────────
+    if ( in_array( $type, array( 'credits', 'gems', 'coins' ) ) || strpos( $type, 'points:' ) === 0 ) {
+        $pt_slug = ( strpos( $type, 'points:' ) === 0 ) ? substr( $type, 7 ) : $type;
+        $amount  = absint( $_POST['amount'] ?? 100 );
+        
+        gamipress_award_points_to_user( $user_id, $amount, $pt_slug );
 
-        // Also record entry in Earnings History table (wp_gamipress_user_earnings)
-        $pt_id = gamipress_get_points_type_id( 'credits' );
+        $pt_id   = gamipress_get_points_type_id( $pt_slug );
+        $pt_name = ucfirst( $pt_slug );
+
         gamipress_insert_user_earning( $user_id, array(
-            'title'       => sprintf( '+%d Credits', $amount ),
+            'title'       => sprintf( '+%d %s', $amount, $pt_name ),
             'post_id'     => $pt_id ? $pt_id : 0,
             'post_type'   => 'points-type',
             'points'      => $amount,
-            'points_type' => 'credits',
+            'points_type' => $pt_slug,
             'date'        => date( 'Y-m-d H:i:s', current_time( 'timestamp' ) ),
         ) );
 
-        $balance = gamipress_get_user_points( $user_id, 'credits' );
+        $balance = gamipress_get_user_points( $user_id, $pt_slug );
         wp_send_json_success( array(
-            'message' => sprintf( '+%d Credits awarded! New balance: %d', $amount, $balance ),
+            'message' => sprintf( '+%d %s awarded! New balance: %d', $amount, $pt_name, $balance ),
         ) );
     }
 
@@ -261,6 +264,22 @@ function gp_demo_panel_render() {
                 <button class="gp-btn" data-award="credits" data-amount="50">+50</button>
                 <button class="gp-btn" data-award="credits" data-amount="100">+100</button>
                 <button class="gp-btn" data-award="credits" data-amount="500">+500</button>
+            </div>
+
+            <h4>💎 Gems</h4>
+            <div class="gp-credits-row">
+                <button class="gp-btn" data-award="gems" data-amount="5">+5</button>
+                <button class="gp-btn" data-award="gems" data-amount="25">+25</button>
+                <button class="gp-btn" data-award="gems" data-amount="50">+50</button>
+                <button class="gp-btn" data-award="gems" data-amount="100">+100</button>
+            </div>
+
+            <h4>🪙 Coins</h4>
+            <div class="gp-credits-row">
+                <button class="gp-btn" data-award="coins" data-amount="50">+50</button>
+                <button class="gp-btn" data-award="coins" data-amount="100">+100</button>
+                <button class="gp-btn" data-award="coins" data-amount="250">+250</button>
+                <button class="gp-btn" data-award="coins" data-amount="1000">+1000</button>
             </div>
 
             <?php if ( $badges ) : ?>

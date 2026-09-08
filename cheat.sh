@@ -50,6 +50,42 @@ case "$CMD" in
     echo "    View balance → http://localhost:8080/my-points/"
     ;;
 
+  gems)
+    AMOUNT="${ARG:-10}"
+    $WP eval "
+      \$user_id = ${DEMO_ID}; \$amount = ${AMOUNT};
+      gamipress_award_points_to_user(\$user_id, \$amount, 'gems');
+      \$pt_id = gamipress_get_points_type_id('gems');
+      gamipress_insert_user_earning(\$user_id, array(
+        'title'       => sprintf('+%d Gems', \$amount),
+        'post_id'     => \$pt_id ? \$pt_id : 0,
+        'post_type'   => 'points-type',
+        'points'      => \$amount,
+        'points_type' => 'gems',
+        'date'        => date('Y-m-d H:i:s', current_time('timestamp')),
+      ));
+    " >/dev/null
+    echo "✅  Awarded ${AMOUNT} Gems to '$DEMO_USER' (user ID ${DEMO_ID})."
+    ;;
+
+  coins)
+    AMOUNT="${ARG:-100}"
+    $WP eval "
+      \$user_id = ${DEMO_ID}; \$amount = ${AMOUNT};
+      gamipress_award_points_to_user(\$user_id, \$amount, 'coins');
+      \$pt_id = gamipress_get_points_type_id('coins');
+      gamipress_insert_user_earning(\$user_id, array(
+        'title'       => sprintf('+%d Coins', \$amount),
+        'post_id'     => \$pt_id ? \$pt_id : 0,
+        'post_type'   => 'points-type',
+        'points'      => \$amount,
+        'points_type' => 'coins',
+        'date'        => date('Y-m-d H:i:s', current_time('timestamp')),
+      ));
+    " >/dev/null
+    echo "✅  Awarded ${AMOUNT} Coins to '$DEMO_USER' (user ID ${DEMO_ID})."
+    ;;
+
   badge)
     SLUG="${ARG:-badge-welcome}"
     BADGE_ID=$($WP post list --post_type=badges --name="$SLUG" --field=ID --format=ids 2>/dev/null | head -1)

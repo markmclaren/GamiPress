@@ -6,7 +6,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-// ── Ensure GamiPress Version Options Are Set ──────────────────────────────
+// ── Ensure GamiPress Version Options & Custom Tables Are Set ───────────────
 add_action( 'init', function() {
     if ( defined( 'GAMIPRESS_VER' ) ) {
         if ( get_option( 'gamipress_version' ) !== GAMIPRESS_VER ) {
@@ -14,7 +14,15 @@ add_action( 'init', function() {
             update_option( 'gamipress_db_version', GAMIPRESS_VER );
         }
     }
-} );
+    if ( function_exists( 'ct_setup_table' ) ) {
+        foreach ( array( 'gamipress_user_earnings', 'gamipress_user_earnings_meta', 'gamipress_logs', 'gamipress_logs_meta' ) as $t_name ) {
+            $table = ct_setup_table( $t_name );
+            if ( $table && isset( $table->db ) ) {
+                $table->db->maybe_upgrade();
+            }
+        }
+    }
+}, 1 );
 
 // ── Register Custom Template Location for GamiPress ──────────────────────────
 add_filter( 'gamipress_template_paths', function( $file_paths ) {
@@ -271,12 +279,18 @@ add_filter( 'gamipress_earnings_render_column', function( $column_output, $colum
         'rank-contributor'       => array( 'icon' => 'fa-award',           'bg' => 'linear-gradient(135deg, #ff8c00, #e52e71)' ),
         'rank-champion'          => array( 'icon' => 'fa-trophy',          'bg' => 'linear-gradient(135deg, #f7971e, #ffd200)' ),
         'credits'                => array( 'icon' => 'fa-coins',           'bg' => 'linear-gradient(135deg, #f09819, #edde5d)' ),
+        'gems'                   => array( 'icon' => 'fa-gem',             'bg' => 'linear-gradient(135deg, #e100ff, #7f00ff)' ),
+        'coins'                  => array( 'icon' => 'fa-coins',           'bg' => 'linear-gradient(135deg, #ffb347, #ffcc33)' ),
     );
 
     $cfg = $icon_map[ $slug ] ?? null;
 
     if ( ! $cfg ) {
-        if ( in_array( $user_earning->post_type, array( 'credits', 'points-type', 'points-award' ) ) || strpos( strtolower( $title ), 'credit' ) !== false ) {
+        if ( strpos( strtolower( $title ), 'gem' ) !== false ) {
+            $cfg = array( 'icon' => 'fa-gem', 'bg' => 'linear-gradient(135deg, #e100ff, #7f00ff)' );
+        } elseif ( strpos( strtolower( $title ), 'coin' ) !== false ) {
+            $cfg = array( 'icon' => 'fa-coins', 'bg' => 'linear-gradient(135deg, #ffb347, #ffcc33)' );
+        } elseif ( in_array( $user_earning->post_type, array( 'credits', 'points-type', 'points-award' ) ) || strpos( strtolower( $title ), 'credit' ) !== false ) {
             $cfg = array( 'icon' => 'fa-coins', 'bg' => 'linear-gradient(135deg, #f09819, #edde5d)' );
         } elseif ( in_array( $user_earning->post_type, gamipress_get_achievement_types_slugs() ) ) {
             $cfg = array( 'icon' => 'fa-award', 'bg' => 'linear-gradient(135deg, #8e2de2, #4a00e0)' );
@@ -300,10 +314,8 @@ function gp_check_and_update_user_rank( $user_id ) {
         return;
     }
 
-    $credits = (int) gamipress_get_user_points( $user_id, 'credits' );
-    
     $ranks = gamipress_get_ranks( array(
-        'post_type'      => 'levels',
+        'post_type'      => gamipress_get_rank_types_slugs(),
         'orderby'        => 'meta_value_num',
         'meta_key'       => '_gamipress_points_to_unlock',
         'order'          => 'DESC',
@@ -314,11 +326,18 @@ function gp_check_and_update_user_rank( $user_id ) {
         return;
     }
 
-    $current_rank_id = (int) gamipress_get_user_rank_id( $user_id, 'levels' );
-
     foreach ( $ranks as $rank ) {
         $threshold = (int) get_post_meta( $rank->ID, '_gamipress_points_to_unlock', true );
-        if ( $credits >= $threshold ) {
+        $pts_type  = get_post_meta( $rank->ID, '_gamipress_points_type_to_unlock', true );
+        if ( empty( $pts_type ) ) {
+            $pts_type = 'credits';
+        }
+
+        $user_pts = (int) gamipress_get_user_points( $user_id, $pts_type );
+
+        if ( $user_pts >= $threshold ) {
+            $rank_type       = get_post_type( $rank->ID );
+            $current_rank_id = (int) gamipress_get_user_rank_id( $user_id, $rank_type );
             if ( $current_rank_id !== (int) $rank->ID ) {
                 gamipress_update_user_rank( $user_id, $rank->ID, $current_rank_id );
             }

@@ -51,12 +51,13 @@ create_post() {
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
-# POINTS TYPE: Credits
+# POINTS TYPES: Credits, Gems, Coins
 # ══════════════════════════════════════════════════════════════════════════════
 PT_ID=$(create_post points-type "Credits" credits)
+PT_GEMS=$(create_post points-type "Gems" gems)
+PT_COINS=$(create_post points-type "Coins" coins)
 
-# Points award rules (post_type=points-award, parented to the points type)
-# Award 5 Credits on login
+# Points award rules for Credits
 AWARD_ID=$(create_post points-award "Login Award" credits-login "$PT_ID")
 set_meta "$AWARD_ID" _gamipress_trigger_type  gamipress_login
 set_meta "$AWARD_ID" _gamipress_points        5
@@ -64,7 +65,6 @@ set_meta "$AWARD_ID" _gamipress_points_type   credits
 set_meta "$AWARD_ID" _gamipress_maximum_earnings 0
 set_meta "$AWARD_ID" _gamipress_count         1
 
-# Award 10 Credits for each comment
 AWARD_ID=$(create_post points-award "Comment Award" credits-comment "$PT_ID")
 set_meta "$AWARD_ID" _gamipress_trigger_type  gamipress_new_comment
 set_meta "$AWARD_ID" _gamipress_points        10
@@ -72,7 +72,6 @@ set_meta "$AWARD_ID" _gamipress_points_type   credits
 set_meta "$AWARD_ID" _gamipress_maximum_earnings 0
 set_meta "$AWARD_ID" _gamipress_count         1
 
-# Award 20 Credits for daily site visit
 AWARD_ID=$(create_post points-award "Daily Visit Award" credits-daily-visit "$PT_ID")
 set_meta "$AWARD_ID" _gamipress_trigger_type  gamipress_site_visit
 set_meta "$AWARD_ID" _gamipress_points        20
@@ -80,13 +79,28 @@ set_meta "$AWARD_ID" _gamipress_points_type   credits
 set_meta "$AWARD_ID" _gamipress_maximum_earnings 0
 set_meta "$AWARD_ID" _gamipress_count         1
 
-# Award 50 Credits for publishing a post
 AWARD_ID=$(create_post points-award "Publish Post Award" credits-publish-post "$PT_ID")
 set_meta "$AWARD_ID" _gamipress_trigger_type  gamipress_publish_post
 set_meta "$AWARD_ID" _gamipress_points        50
 set_meta "$AWARD_ID" _gamipress_points_type   credits
 set_meta "$AWARD_ID" _gamipress_maximum_earnings 0
 set_meta "$AWARD_ID" _gamipress_count         1
+
+# Points award rule for Gems (1 Gem per post published)
+AWARD_GEM=$(create_post points-award "Publish Post Gem Award" gems-publish-post "$PT_GEMS")
+set_meta "$AWARD_GEM" _gamipress_trigger_type  gamipress_publish_post
+set_meta "$AWARD_GEM" _gamipress_points        1
+set_meta "$AWARD_GEM" _gamipress_points_type   gems
+set_meta "$AWARD_GEM" _gamipress_maximum_earnings 0
+set_meta "$AWARD_GEM" _gamipress_count         1
+
+# Points award rule for Coins (100 Coins on login)
+AWARD_COIN=$(create_post points-award "Login Coins Award" coins-login "$PT_COINS")
+set_meta "$AWARD_COIN" _gamipress_trigger_type  gamipress_login
+set_meta "$AWARD_COIN" _gamipress_points        100
+set_meta "$AWARD_COIN" _gamipress_points_type   coins
+set_meta "$AWARD_COIN" _gamipress_maximum_earnings 0
+set_meta "$AWARD_COIN" _gamipress_count         1
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ACHIEVEMENT TYPE: Badges
